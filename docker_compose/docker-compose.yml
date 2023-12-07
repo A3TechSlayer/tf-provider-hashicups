@@ -1,23 +1,75 @@
 # Copyright (c) HashiCorp, Inc.
 # SPDX-License-Identifier: MPL-2.0
 
-version: '3.7'
+version: "3.8"
+
+networks:
+  hashicups-network:
+
 services:
-  api:
-    image: "hashicorpdemoapp/product-api:v0.0.22"
-    ports:
-      - "19090:9090"
+  hashicups-db:
+    image: hashicorpdemoapp/product-api-db:v0.0.22
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: products
+      POSTGRES_PASSWORD: hashicups_pwd
+      POSTGRES_USER: hashicups
+    networks:
+      - hashicups-network
+
+volumes:
+  postgres_data:
+
+# Payments Service
+  hashicups-api-payments:
+    image: hashicorpdemoapp/payments:latest
+    restart: unless-stopped
+    networks:
+      - hashicups-network
+
+# Product API Service
+  hashicups-api-product:
+    image: hashicorpdemoapp/product-api:v0.0.22
+    restart: unless-stopped
     volumes:
-      - ./conf.json:/config/config.json
+      - ./conf.json:/conf.json:ro
+    networks:
+      - hashicups-network
     environment:
-      CONFIG_FILE: '/config/config.json'
-    depends_on:
-      - db
-  db:
-    image: "hashicorpdemoapp/product-api-db:v0.0.22"
-    ports:
-      - "15432:5432"
+      DB_HOST: ${DB_HOST}
+      PRODUCT_API_HOST: ${PRODUCT_API_HOST}
+      PAYMENT_API_HOST: ${PAYMENT_API_HOST}
+
+# Public API Service
+  hashicups-api-public:
+    image: hashicorpdemoapp/public-api:v0.0.7
+    restart: unless-stopped
+    networks:
+      - hashicups-network
     environment:
-      POSTGRES_DB: 'products'
-      POSTGRES_USER: 'postgres'
-      POSTGRES_PASSWORD: 'password'
+      PRODUCT_API_URI: http://${PRODUCT_API_HOST}:9090
+      PAYMENT_API_URI: http://${PAYMENT_API_HOST}:8080
+      BIND_ADDRESS: ${BIND_PUB}:8081
+
+# Frontend Service
+  hashicups-frontend:
+    image: hashicorpdemoapp/frontend:v1.0.9
+    restart: unless-stopped
+    networks:
+      - hashicups-network
+    environment:
+      NEXT_PUBLIC_PUBLIC_API_URL: http://${PUBLIC_API_HOST}:8081
+
+# Nginx Service
+  hashicups-nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - hashicups-network
+    environment:
+      FRONTEND: ${FE_HOST}
+      API: ${PUBLIC_API_HOST}
+      http_upgrade: "$http_upgrade"
+      host: "$host"
