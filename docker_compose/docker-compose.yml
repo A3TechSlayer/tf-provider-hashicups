@@ -1,77 +1,56 @@
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
-
-version: "3.8"
-
-networks:
-  hashicups-network:
-
+version: '3.8'
 services:
-  hashicups-db:
-    image: hashicorpdemoapp/product-api-db:v0.0.22
-    restart: unless-stopped
+  frontend:
+    image: 'hashicorpdemoapp/frontend:v1.0.9'
+    environment:
+      - NEXT_PUBLIC_PUBLIC_API_URL=http://public-api:8081
+    ports:
+      - 3000:3000
+  nginx:
+    image: hashicorpdemoapp/frontend-nginx:v1.0.9
+    links:
+      - 'public-api:public-api'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - type: bind
+        source: ./nginx.conf
+        target: /etc/nginx/conf.d/default.conf
+    ports:
+      - 80:80
+  public-api:
+    image: 'hashicorpdemoapp/public-api:v0.0.7'
     environment:
-      POSTGRES_DB: products
-      POSTGRES_PASSWORD: hashicups_pwd
-      POSTGRES_USER: hashicups
-    networks:
-      - hashicups-network
-
-volumes:
-  postgres_data:
-
-# Payments Service
-  hashicups-api-payments:
-    image: hashicorpdemoapp/payments:latest
-    restart: unless-stopped
-    networks:
-      - hashicups-network
-
-# Product API Service
-  hashicups-api-product:
-    image: hashicorpdemoapp/product-api:v0.0.22
-    restart: unless-stopped
+      - PRODUCT_API_URI=product-api:9090
+      - PAYMENT_API_URI=payments:8080
+      - BIND_ADDRESS=127.0.0.1:8081
+    links:
+      - 'product-api:product-api'
+      - 'payments:payments'
+    ports:
+      - '8081:8081'
+  product-api:
+    image: 'hashicorpdemoapp/product-api:v0.0.22'
     volumes:
-      - ./conf.json:/conf.json:ro
-    networks:
-      - hashicups-network
+      - type: bind
+        source: ./conf.json
+        target: /conf.json
+    links:
+      - 'product-db:product-db'
+    ports:
+      - '9090:9090'
+    depends_on:
+      - product-db
+  product-db:
+    image: 'hashicorpdemoapp/product-api-db:v0.0.22'
+    ports:
+      - '5432:5432'
     environment:
-      DB_HOST: ${DB_HOST}
-      PRODUCT_API_HOST: ${PRODUCT_API_HOST}
-      PAYMENT_API_HOST: ${PAYMENT_API_HOST}
+      - POSTGRES_DB=products
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+  payments:
+    image: 'hashicorpdemoapp/payments:latest'
+    ports:
+      - '8080:8080'
 
-# Public API Service
-  hashicups-api-public:
-    image: hashicorpdemoapp/public-api:v0.0.7
-    restart: unless-stopped
-    networks:
-      - hashicups-network
-    environment:
-      PRODUCT_API_URI: http://${PRODUCT_API_HOST}:9090
-      PAYMENT_API_URI: http://${PAYMENT_API_HOST}:8080
-      BIND_ADDRESS: ${BIND_PUB}:8081
 
-# Frontend Service
-  hashicups-frontend:
-    image: hashicorpdemoapp/frontend:v1.0.9
-    restart: unless-stopped
-    networks:
-      - hashicups-network
-    environment:
-      NEXT_PUBLIC_PUBLIC_API_URL: http://${PUBLIC_API_HOST}:8081
-
-# Nginx Service
-  hashicups-nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - hashicups-network
-    environment:
-      FRONTEND: ${FE_HOST}
-      API: ${PUBLIC_API_HOST}
-      http_upgrade: "$http_upgrade"
-      host: "$host"
+    
