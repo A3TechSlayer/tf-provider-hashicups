@@ -10,6 +10,8 @@ services:
   hashicups-db:
     image: hashicorpdemoapp/product-api-db:v0.0.22
     restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: products
       POSTGRES_PASSWORD: hashicups_pwd
