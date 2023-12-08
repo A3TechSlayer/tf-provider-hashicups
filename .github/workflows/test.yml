@@ -55,7 +55,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Set up Docker Compose
-        run: docker-compose -f ./docker-compose/docker-compose.yml up -d
+        run: docker-compose -f ./docker_compose/docker-compose.yml up -d
 
   # Run acceptance tests in a matrix with Terraform CLI versions
   test:
@@ -95,4 +95,4 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Tear down Docker Compose
-        run: docker-compose -f ./docker-compose/docker-compose.yml down
+        run: docker-compose -f ./docker_compose/docker-compose.yml down
