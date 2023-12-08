@@ -87,12 +87,3 @@ jobs:
           TF_ACC: "1"
         run: go test -v -cover ./internal/provider/
         timeout-minutes: 10
-
-  # Tear down Docker Compose services
-  teardown-docker-compose:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Tear down Docker Compose
-        run: docker-compose -f ./docker_compose/docker-compose.yml down
