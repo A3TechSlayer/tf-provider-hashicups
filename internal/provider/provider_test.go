@@ -15,8 +15,8 @@ const (
 	// such as updating the Makefile and running the testing through that tool.
 	providerConfig = `
 provider "hashicups" {
-  username = "education"
-  password = "test123"
+  username = "hashicups"
+  password = "hashicups_pwd"
   host     = "http://localhost:9090"
 }
 `
