@@ -30,7 +30,7 @@ jobs:
 
       - name: Download and decrypt GPG key
         env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_PASSPHRASE: ${{ secrets.PASSPHRASE }}
         run: |
           gpg --quiet --decrypt --batch --passphrase "${{ env.PASSPHRASE }}" \
               -o gpg_private_key ${{ secrets.GPG_PRIVATE_KEY }}
