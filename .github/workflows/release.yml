@@ -32,7 +32,7 @@ jobs:
         env:
           GPG_PASSPHRASE: ${{ secrets.PASSPHRASE }}
         run: |
-          gpg --quiet --decrypt --batch --passphrase "${{ env.PASSPHRASE }}" \
+          gpg --quiet --decrypt --batch --passphrase "${{ secrets.PASSPHRASE }}" \
               -o gpg_private_key ${{ secrets.GPG_PRIVATE_KEY }}
           gpg --list-secret-keys
 
@@ -47,7 +47,7 @@ jobs:
           # Avoid exposing GITHUB_TOKEN to GoReleaser
           # https://goreleaser.com/environment/
           # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GPG_FINGERPRINT: ${{ secrets.GPG_FINGERPRINT }}
+          GPG_FINGERPRINT: ${{ env.GPG_FINGERPRINT }}
 
       - name: Upload release assets
         uses: actions/upload-artifact@v3
