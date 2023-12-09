@@ -31,6 +31,8 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+      - name: Set GPG tty
+        run: export GPG_TTY=$(tty)
       - name: List keys
         run: gpg -K
       - name: Run GoReleaser
